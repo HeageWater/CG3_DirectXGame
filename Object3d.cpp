@@ -31,6 +31,8 @@ XMFLOAT3 Object3d::up = { 0, 1, 0 };
 D3D12_VERTEX_BUFFER_VIEW Object3d::vbView{};
 D3D12_INDEX_BUFFER_VIEW Object3d::ibView{};
 Object3d::VertexPosNormalUv Object3d::vertices[vertexCount];
+XMMATRIX Object3d::matBillboard = XMMatrixIdentity();
+XMMATRIX Object3d::matBillboardY = XMMatrixIdentity();
 //unsigned short Object3d::indices[planeCount * 3];
 unsigned short Object3d::indices[indexCount];
 
@@ -665,6 +667,7 @@ void Object3d::UpdateViewMatrix()
 	matCameraRot.r[2] = cameraAxisZ;
 	matCameraRot.r[3] = XMVectorSet(0, 0, 0, 1);
 
+
 	//逆行列を計算
 	matView = XMMatrixTranspose(matCameraRot);
 
@@ -685,6 +688,29 @@ void Object3d::UpdateViewMatrix()
 
 	//ビュー行列に平行移動成分を設定
 	matView.r[3] = translation;
+
+#pragma region ビルボード
+	matBillboard.r[0] = cameraAxisX;
+	matBillboard.r[1] = cameraAxisY;
+	matBillboard.r[2] = cameraAxisZ;
+	matBillboard.r[3] = XMVectorSet(0, 0, 0, 1);
+#pragma region
+
+#pragma region Y軸回り
+	XMVECTOR ybillcameraAxisX, ybillcameraAxisY, ybillcameraAxisZ;
+
+	//xはそのまま
+	ybillcameraAxisX = cameraAxisX;
+	//yはワールド座標系のy
+	ybillcameraAxisY = XMVector3Normalize(upVector);
+	//zはx→yの外積
+	ybillcameraAxisZ = XMVector3Cross(cameraAxisX,cameraAxisY);
+
+	matBillboardY.r[0] = ybillcameraAxisX;
+	matBillboardY.r[1] = ybillcameraAxisY;
+	matBillboardY.r[2] = ybillcameraAxisZ;
+	matBillboardY.r[3] = XMVectorSet(0, 0, 0, 1);
+#pragma endregion
 }
 
 bool Object3d::Initialize()
@@ -725,6 +751,11 @@ void Object3d::Update()
 
 	// ワールド行列の合成
 	matWorld = XMMatrixIdentity(); // 変形をリセット
+
+	//ビルボード行列をかける
+	//matWorld *= matBillboard;
+	matWorld *= matBillboardY;
+
 	matWorld *= matScale; // ワールド行列にスケーリングを反映
 	matWorld *= matRot; // ワールド行列に回転を反映
 	matWorld *= matTrans; // ワールド行列に平行移動を反映
