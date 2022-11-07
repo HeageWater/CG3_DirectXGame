@@ -25,7 +25,7 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Object3d::cpuDescHandleSRV;
 CD3DX12_GPU_DESCRIPTOR_HANDLE Object3d::gpuDescHandleSRV;
 XMMATRIX Object3d::matView{};
 XMMATRIX Object3d::matProjection{};
-XMFLOAT3 Object3d::eye = { 0, 0, -50.0f };
+XMFLOAT3 Object3d::eye = { 0, 0, -5.0f };
 XMFLOAT3 Object3d::target = { 0, 0, 0 };
 XMFLOAT3 Object3d::up = { 0, 1, 0 };
 D3D12_VERTEX_BUFFER_VIEW Object3d::vbView{};
@@ -788,7 +788,7 @@ void Object3d::Update()
 	matWorld = XMMatrixIdentity(); // 変形をリセット
 
 	//ビルボード行列をかける
-	//matWorld *= matBillboard;
+	matWorld *= matBillboard;
 	//matWorld *= matBillboardY;
 
 	matWorld *= matScale; // ワールド行列にスケーリングを反映

@@ -4,13 +4,22 @@ static const uint vnum = 4;
 
 static const float4 offset_array[vnum] =
 {
-	float4(-0.5f,-0.5f,0,0);//左上、下、右下、上
-	float4(-0.5f,+0.5f,0,0);
-	float4(+0.5f,-0.5f,0,0);
-	float4(+0.5f,+0.5f,0,0);
+	float4(-0.5f,-0.5f,0,0),//左上、下、右下、上
+	float4(-0.5f,+0.5f,0,0),
+	float4(+0.5f,-0.5f,0,0),
+	float4(+0.5f,+0.5f,0,0)
 };
 
-[maxvertexcount(vnum]
+static const float2 uv_array[vnum] =
+{
+	float2(0,1),//左上、下、右下、上
+	float2(0,0),
+	float2(1,1),
+	float2(1,0)
+};
+
+
+[maxvertexcount(vnum)]
 void main(
 	point VSOutput input[1] : SV_POSITION,
 	inout TriangleStream< GSOutput > output
@@ -24,7 +33,7 @@ void main(
 
 		element.svpos = mul(mat, element.svpos);
 
-		element.uv = float2(0, 0);
+		element.uv = uv_array[i];
 
 		output.Append(element);
 	}
