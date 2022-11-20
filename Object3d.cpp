@@ -351,8 +351,8 @@ void Object3d::InitializeGraphicsPipeline()
 
 	//加算
 	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;
-	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blenddesc.DestBlend = D3D12_BLEND_ONE;
+	blenddesc.SrcBlend = D3D12_BLEND_ONE;
+	blenddesc.DestBlend = D3D12_BLEND_ZERO;
 
 	//減算
 	//blenddesc.BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
@@ -421,14 +421,9 @@ void Object3d::LoadTexture()
 	ScratchImage scratchImg{};
 
 	// WICテクスチャのロード
-	result = LoadFromWICFile(L"Resources/kusa.png", WIC_FLAGS_NONE, &metadata, scratchImg);
+	result = LoadFromWICFile(L"Resources/roketto.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 	//result = LoadFromWICFile(L"Resources/tex1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 	assert(SUCCEEDED(result));
-
-	if (true) {
-		result = LoadFromWICFile(L"Resources/effect1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
-		assert(SUCCEEDED(result));
-	}
 
 	ScratchImage mipChain{};
 	// ミップマップ生成

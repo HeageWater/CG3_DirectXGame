@@ -144,7 +144,7 @@ public: // 静的メンバ関数
 	/// <param name="position"></param>
 	/// <param name="velocity"></param>
 	/// <param name="accel"></param>
-	void Add(int file, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOAT3 accel,float Sscale,float Escale);
+	void Add(int file, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOAT3 accel, float Sscale, float Escale);
 
 private: // 静的メンバ変数
 	// デバイス
@@ -215,6 +215,7 @@ private:// 静的メンバ関数
 	/// テクスチャ読み込み
 	/// </summary>
 	static void LoadTexture();
+	static void LoadTextureA();
 
 	/// <summary>
 	/// モデル作成
