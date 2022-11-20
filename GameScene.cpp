@@ -11,6 +11,7 @@ GameScene::~GameScene()
 {
 	delete spriteBG;
 	delete object3d;
+	delete object3d2;
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -36,11 +37,17 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 3Dオブジェクト生成
 
 	XMFLOAT3 position = { 0, 0, 0 };
-	position = { 10 - 30, 0, 10 };
+	position = { -20, 0, 10 };
 
 	object3d = Object3d::Create();
 	object3d->SetPosition(position);
 	object3d->Update();
+
+	position = { -10, 0, -10 };
+
+	object3d2 = Object3d::Create();
+	object3d2->SetPosition(position);
+	object3d2->Update();
 
 }
 
@@ -60,6 +67,17 @@ void GameScene::Update()
 
 		// 座標の変更を反映
 		object3d->SetPosition(position);
+
+
+		position = object3d2->GetPosition();
+
+		// 移動後の座標を計算
+		if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
+		else if (input->PushKey(DIK_DOWN)) { position.y -= 1.0f; }
+		if (input->PushKey(DIK_RIGHT)) { position.x += 1.0f; }
+		else if (input->PushKey(DIK_LEFT)) { position.x -= 1.0f; }
+
+		object3d2->SetPosition(position);
 	}
 
 	// カメラ移動
@@ -76,7 +94,7 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
 	}
 	object3d->Update();
-
+	object3d2->Update();
 }
 
 void GameScene::Draw()
@@ -106,6 +124,7 @@ void GameScene::Draw()
 
 	// 3Dオブクジェクトの描画
 	object3d->Draw();
+	object3d2->Draw();
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる

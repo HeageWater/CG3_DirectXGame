@@ -60,7 +60,10 @@ private: // メンバ変数
 	/// ゲームシーン用
 	/// </summary>
 	Sprite* spriteBG = nullptr;
+
 	Object3d* object3d;
+	Object3d* object3d2;
+
 	int objectCount = 20;
 };
 

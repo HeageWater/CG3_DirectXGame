@@ -375,6 +375,11 @@ void Object3d::LoadTexture()
 	//result = LoadFromWICFile(L"Resources/tex1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 	assert(SUCCEEDED(result));
 
+	if (true) {
+		result = LoadFromWICFile(L"Resources/roketto.png", WIC_FLAGS_NONE, &metadata, scratchImg);
+		assert(SUCCEEDED(result));
+	}
+
 	ScratchImage mipChain{};
 	// ミップマップ生成
 	result = GenerateMipMaps(
@@ -788,8 +793,12 @@ void Object3d::Update()
 	matWorld = XMMatrixIdentity(); // 変形をリセット
 
 	//ビルボード行列をかける
-	matWorld *= matBillboard;
-	//matWorld *= matBillboardY;
+	if (true) {
+		matWorld *= matBillboard;
+	}
+	else {
+		matWorld *= matBillboardY;
+	}
 
 	matWorld *= matScale; // ワールド行列にスケーリングを反映
 	matWorld *= matRot; // ワールド行列に回転を反映
