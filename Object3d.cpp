@@ -36,6 +36,19 @@ XMMATRIX Object3d::matBillboardY = XMMatrixIdentity();
 ///unsigned short Object3d::indices[planeCount * 3];
 //unsigned short Object3d::indices[indexCount];
 
+
+XMFLOAT3 Purasu(const XMFLOAT3& lhs, const XMFLOAT3& rhs)
+{
+	XMFLOAT3 result;
+
+	result.x = lhs.x + rhs.x;
+	result.y = lhs.y + rhs.y;
+	result.z = lhs.z + rhs.z;
+
+	return result;
+}
+
+
 void Object3d::StaticInitialize(ID3D12Device* device, int window_width, int window_height)
 {
 	// nullptrチェック
@@ -148,6 +161,22 @@ void Object3d::CameraMoveEyeVector(XMFLOAT3 move)
 	SetTarget(target_moved);
 }
 
+void Object3d::Add(int lile, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOAT3 accel, float Sscale, float Escale)
+{
+	particles.emplace_front();
+
+	Particle& p = particles.front();
+
+	p.position = position;
+	p.velocity = velocity;
+	p.accel = accel;
+	p.num_frame = lile;
+
+	p.s_scale = Sscale;
+	p.scale = Sscale;
+	p.e_scale = Escale;
+}
+
 void Object3d::InitializeDescriptorHeap()
 {
 	HRESULT result = S_FALSE;
@@ -200,7 +229,8 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// 頂点シェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"Resources/Shaders/BasicVertexShader.hlsl",	// シェーダファイル名
+		//	L"Resources/Shaders/BasicVertexShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/ParticleVS.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "vs_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -223,7 +253,8 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ピクセルシェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"Resources/Shaders/BasicPixelShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/ParticlePS.hlsl",	// シェーダファイル名
+		//L"Resources/Shaders/BasicPixelShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "ps_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -246,7 +277,8 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ジオメトリシェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"Resources/Shaders/BasicGeometryShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/ParticleGS.hlsl",	// シェーダファイル名
+		//L"Resources/Shaders/BasicGeometryShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "gs_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -284,6 +316,11 @@ void Object3d::InitializeGraphicsPipeline()
 		//	D3D12_APPEND_ALIGNED_ELEMENT,
 		//	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
 		//},
+		{
+			"TEXCOORD", 0, DXGI_FORMAT_R32_FLOAT, 0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+		},
 	};
 
 	// グラフィックスパイプラインの流れを設定
@@ -300,14 +337,27 @@ void Object3d::InitializeGraphicsPipeline()
 	//gpipeline.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 	// デプスステンシルステート
 	gpipeline.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	gpipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
 	// レンダーターゲットのブレンド設定
 	D3D12_RENDER_TARGET_BLEND_DESC blenddesc{};
 	blenddesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	// RBGA全てのチャンネルを描画
 	blenddesc.BlendEnable = true;
+
+	//特になし
+	/*blenddesc.BlendOp = D3D12_BLEND_OP_ADD;
+	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;*/
+
+	//加算
 	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;
 	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	blenddesc.DestBlend = D3D12_BLEND_ONE;
+
+	//減算
+	//blenddesc.BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+	//blenddesc.SrcBlend = D3D12_BLEND_ONE;
+	//blenddesc.DestBlend = D3D12_BLEND_ONE;
 
 	blenddesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blenddesc.SrcBlendAlpha = D3D12_BLEND_ONE;
@@ -376,7 +426,7 @@ void Object3d::LoadTexture()
 	assert(SUCCEEDED(result));
 
 	if (true) {
-		result = LoadFromWICFile(L"Resources/roketto.png", WIC_FLAGS_NONE, &metadata, scratchImg);
+		result = LoadFromWICFile(L"Resources/effect1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 		assert(SUCCEEDED(result));
 	}
 
@@ -593,12 +643,22 @@ void Object3d::CreateModel()
 
 	std::copy(std::begin(verticesSquare), std::end(verticesSquare), vertices);*/
 
-	VertexPos verticesPoint[] = {
-		//{{0.0f,0.0f,0.0f},{0,0,1},{0,1}}
-		{{0.0f,0.0f,0.0f}},
-	};
+	//VertexPos verticesPoint[] = {
+	//	//{{0.0f,0.0f,0.0f},{0,0,1},{0,1}}
+	//	{{0.0f,0.0f,0.0f}},
+	//};
 
-	std::copy(std::begin(verticesPoint), std::end(verticesPoint), vertices);
+	//std::copy(std::begin(verticesPoint), std::end(verticesPoint), vertices);
+
+	/*for (int i = 0; i < vertexCount; i++)
+	{
+		const float md_width = 10.0f;
+
+		vertices[i].pos.x = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
+		vertices[i].pos.y = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
+		vertices[i].pos.z = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
+	}*/
+
 
 	//四角形のインデックスデータ
 	/*unsigned short indeicesSquare[]{
@@ -778,36 +838,74 @@ bool Object3d::Initialize()
 
 void Object3d::Update()
 {
+	//削除
+	particles.remove_if([](Particle& x) {return x.frame >= x.num_frame; });
+
+	for (std::forward_list<Particle>::iterator it = particles.begin();
+		it != particles.end();
+		it++)
+	{
+		it->frame++;
+
+		it->velocity = Purasu(it->velocity, it->accel);
+
+		it->position = Purasu(it->position, it->velocity);
+
+		float f = (float)it->num_frame / it->frame;
+
+		it->scale = (it->e_scale - it->s_scale) / f;
+		it->scale += it->s_scale;
+	}
+
+
+	//更新
 	HRESULT result;
-	XMMATRIX matScale, matRot, matTrans;
+	//XMMATRIX matScale, matRot, matTrans;
 
-	// スケール、回転、平行移動行列の計算
-	matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
-	matRot = XMMatrixIdentity();
-	matRot *= XMMatrixRotationZ(XMConvertToRadians(rotation.z));
-	matRot *= XMMatrixRotationX(XMConvertToRadians(rotation.x));
-	matRot *= XMMatrixRotationY(XMConvertToRadians(rotation.y));
-	matTrans = XMMatrixTranslation(position.x, position.y, position.z);
+	//// スケール、回転、平行移動行列の計算
+	//matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	//matRot = XMMatrixIdentity();
+	//matRot *= XMMatrixRotationZ(XMConvertToRadians(rotation.z));
+	//matRot *= XMMatrixRotationX(XMConvertToRadians(rotation.x));
+	//matRot *= XMMatrixRotationY(XMConvertToRadians(rotation.y));
+	//matTrans = XMMatrixTranslation(position.x, position.y, position.z);
 
-	// ワールド行列の合成
-	matWorld = XMMatrixIdentity(); // 変形をリセット
+	//// ワールド行列の合成
+	//matWorld = XMMatrixIdentity(); // 変形をリセット
 
-	//ビルボード行列をかける
-	if (true) {
-		matWorld *= matBillboard;
-	}
-	else {
-		matWorld *= matBillboardY;
-	}
+	////ビルボード行列をかける
+	//if (true) {
+	//	matWorld *= matBillboard;
+	//}
+	//else {
+	//	matWorld *= matBillboardY;
+	//}
 
-	matWorld *= matScale; // ワールド行列にスケーリングを反映
-	matWorld *= matRot; // ワールド行列に回転を反映
-	matWorld *= matTrans; // ワールド行列に平行移動を反映
+	//matWorld *= matScale; // ワールド行列にスケーリングを反映
+	//matWorld *= matRot; // ワールド行列に回転を反映
+	//matWorld *= matTrans; // ワールド行列に平行移動を反映
 
-	// 親オブジェクトがあれば
-	if (parent != nullptr) {
-		// 親オブジェクトのワールド行列を掛ける
-		matWorld *= parent->matWorld;
+	//// 親オブジェクトがあれば
+	//if (parent != nullptr) {
+	//	// 親オブジェクトのワールド行列を掛ける
+	//	matWorld *= parent->matWorld;
+	//}
+
+	// 頂点バッファへのデータ転送
+	VertexPos* vertMap = nullptr;
+	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
+
+	if (SUCCEEDED(result)) {
+		for (std::forward_list<Particle>::iterator it = particles.begin();
+			it != particles.end();
+			it++)
+		{
+			vertMap->pos = it->position;
+			vertMap->scale = it->scale;
+			vertMap++;
+		}
+
+		vertBuff->Unmap(0, nullptr);
 	}
 
 	// 定数バッファへデータ転送
@@ -816,6 +914,8 @@ void Object3d::Update()
 	//constMap->color = color;
 	//constMap->mat = matWorld * matView * matProjection;	// 行列の合成
 	constMap->mat = matView * matProjection;	// 行列の合成
+	constMap->matBillboard = matBillboard;	// 行列の合成
+	//constMap->matBillboard = XMMatrixIdentity();	// 行列の合成
 	constBuff->Unmap(0, nullptr);
 }
 
@@ -840,5 +940,6 @@ void Object3d::Draw()
 	cmdList->SetGraphicsRootDescriptorTable(1, gpuDescHandleSRV);
 	// 描画コマンド
 	//cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
-	cmdList->DrawInstanced(_countof(vertices), 1, 0, 0);
+	//cmdList->DrawInstanced(_countof(vertices), 1, 0, 0);
+	cmdList->DrawInstanced((UINT)std::distance(particles.begin(), particles.end()), 1, 0, 0);
 }

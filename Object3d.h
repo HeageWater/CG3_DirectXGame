@@ -5,6 +5,7 @@
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <d3dx12.h>
+#include <forward_list>
 
 /// <summary>
 /// 3Dオブジェクト
@@ -32,6 +33,7 @@ public: // サブクラス
 	struct VertexPos
 	{
 		XMFLOAT3 pos; // xyz座標
+		float scale;
 		//XMFLOAT3 normal; // 法線ベクトル
 		//XMFLOAT2 uv;  // uv座標
 	};
@@ -41,8 +43,30 @@ public: // サブクラス
 	{
 		//XMFLOAT4 color;	// 色 (RGBA)
 		XMMATRIX mat;	// ３Ｄ変換行列
+		XMMATRIX matBillboard;	//
 	};
 
+	//パーティクル1粒
+	struct Particle {
+		using XMFLOAT3 = DirectX::XMFLOAT3;
+
+		XMFLOAT3 position = {};
+		XMFLOAT3 velocity = {};
+		XMFLOAT3 accel = {};
+
+		int frame = 0;
+
+		int num_frame = 0;
+
+		float scale = 1.0f;
+
+		float s_scale = 1.0f;
+
+		float e_scale = 0.0f;
+	};
+
+	//パーティクル配列
+	std::forward_list<Particle> particles;
 
 private: // 定数
 	static const int division = 50;					// 分割数
@@ -51,7 +75,8 @@ private: // 定数
 	static const int planeCount = division * 2 + division * 2;		// 面の数
 	//static const int vertexCount = planeCount * 3;		// 頂点数
 	//頂点数
-	static const int vertexCount = 1;
+//	static const int vertexCount = 1;
+	static const int vertexCount = 1024;
 	//インデックス数
 	//static const int indexCount = 3 * 2;
 
@@ -111,6 +136,15 @@ public: // 静的メンバ関数
 	/// <param name="move">移動量</param>
 	static void CameraMoveVector(XMFLOAT3 move);
 	static void CameraMoveEyeVector(XMFLOAT3 move);
+
+	/// <summary>
+	/// パーティクル追加
+	/// </summary>
+	/// <param name="file"></param>
+	/// <param name="position"></param>
+	/// <param name="velocity"></param>
+	/// <param name="accel"></param>
+	void Add(int file, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOAT3 accel,float Sscale,float Escale);
 
 private: // 静的メンバ変数
 	// デバイス
@@ -231,4 +265,3 @@ private: // メンバ変数
 	// 親オブジェクト
 	Object3d* parent = nullptr;
 };
-
