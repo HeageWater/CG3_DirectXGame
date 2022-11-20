@@ -41,105 +41,19 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	object3d = Object3d::Create();
 	object3d->SetPosition(position);
 	object3d->Update();
+	
+	object3d->Add(300, position, position, position, 1.0f, 0.0f);
 
-	for (int i = 0; i < 100; i++)
-	{
-		XMFLOAT3 pos{};
+	position = { 5, 0, 0 };
 
-		const float md_width = 10.0f;
-
-		pos.x = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
-		pos.y = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
-		pos.z = (float)rand() / RAND_MAX * md_width - md_width / 2.0f;
-
-
-		XMFLOAT3 vel{};
-
-		const float md_vel = 0.1f;
-
-		vel.x = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-		vel.y = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-		vel.z = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-
-
-		XMFLOAT3 acc{};
-
-		const float md_acc = 0.001f;
-
-		acc.y = -(float)rand() / RAND_MAX * md_acc;
-
-		object3d->Add(300, pos, vel, acc, 1.0f, 0.0f);
-	}
+	object3d2 = Object3d::Create();
+	object3d2->SetPosition(position);
+	object3d2->Update2();
 }
 
 void GameScene::Update()
 {
-	int move  = 5;
-
-	if (input->TriggerKey(DIK_1))
-	{
-		for (int i = 0; i < 100; i++)
-		{
-			XMFLOAT3 pos{};
-
-			const float md_width = 10.0f;
-
-			pos.x = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f ) - move;
-			pos.y = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f );
-			pos.z = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f );
-
-
-			XMFLOAT3 vel{};
-
-			const float md_vel = 0.1f;
-
-			vel.x = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-			vel.y = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-			vel.z = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-
-
-			XMFLOAT3 acc{};
-
-			const float md_acc = 0.001f;
-
-			acc.y = -(float)rand() / RAND_MAX * md_acc;
-
-			object3d->Add(300, pos, vel, acc, 1.0f, 0.0f);
-		}
-	}
-
-	if (input->TriggerKey(DIK_2))
-	{
-		for (int i = 0; i < 100; i++)
-		{
-			XMFLOAT3 pos{};
-
-			const float md_width = 10.0f;
-
-			pos.x = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f ) + move;
-			pos.y = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f );
-			pos.z = ((float)rand() / RAND_MAX * md_width - md_width / 2.0f );
-
-
-			XMFLOAT3 vel{};
-
-			const float md_vel = 0.1f;
-
-			vel.x = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-			vel.y = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-			vel.z = (float)rand() / RAND_MAX * md_vel - md_vel / 2.0f;
-
-
-			XMFLOAT3 acc{};
-
-			const float md_acc = 0.001f;
-
-			acc.y = -(float)rand() / RAND_MAX * md_acc;
-
-			object3d->Add(300, pos, vel, acc, 1.0f, 0.0f);
-		}
-	}
-
+	
 	// オブジェクト移動
 	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
 	{
@@ -170,6 +84,7 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_A)) { Object3d::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
 	}
 	object3d->Update();
+	object3d2->Update2();
 }
 
 void GameScene::Draw()
@@ -198,8 +113,8 @@ void GameScene::Draw()
 	Object3d::PreDraw(cmdList);
 
 	// 3Dオブクジェクトの描画
+	object3d2->Draw2();
 	object3d->Draw();
-
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
 	/// </summary>

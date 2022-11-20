@@ -62,6 +62,7 @@ private: // メンバ変数
 	Sprite* spriteBG = nullptr;
 
 	Object3d* object3d;
+	Object3d* object3d2;
 
 	int objectCount = 20;
 };

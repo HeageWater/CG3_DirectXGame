@@ -840,7 +840,7 @@ void Object3d::Update()
 		it != particles.end();
 		it++)
 	{
-		it->frame++;
+		/*it->frame++;
 
 		it->velocity = Purasu(it->velocity, it->accel);
 
@@ -849,7 +849,7 @@ void Object3d::Update()
 		float f = (float)it->num_frame / it->frame;
 
 		it->scale = (it->e_scale - it->s_scale) / f;
-		it->scale += it->s_scale;
+		it->scale += it->s_scale;*/
 	}
 
 
@@ -937,4 +937,62 @@ void Object3d::Draw()
 	//cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 	//cmdList->DrawInstanced(_countof(vertices), 1, 0, 0);
 	cmdList->DrawInstanced((UINT)std::distance(particles.begin(), particles.end()), 1, 0, 0);
+}
+
+void Object3d::Update2()
+{
+	//更新
+	HRESULT result;
+	XMMATRIX matScale, matRot, matTrans;
+
+	// スケール、回転、平行移動行列の計算
+	matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationZ(XMConvertToRadians(rotation.z));
+	matRot *= XMMatrixRotationX(XMConvertToRadians(rotation.x));
+	matRot *= XMMatrixRotationY(XMConvertToRadians(rotation.y));
+	matTrans = XMMatrixTranslation(position.x, position.y, position.z);
+
+	// ワールド行列の合成
+	matWorld = XMMatrixIdentity(); // 変形をリセット
+
+	matWorld *= matScale; // ワールド行列にスケーリングを反映
+	matWorld *= matRot; // ワールド行列に回転を反映
+	matWorld *= matTrans; // ワールド行列に平行移動を反映
+
+
+	// 定数バッファへデータ転送
+	ConstBufferData* constMap = nullptr;
+	result = constBuff->Map(0, nullptr, (void**)&constMap);
+	//constMap->color = color;
+	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
+	//constMap->mat = matView * matProjection;	// 行列の合成
+	//constMap->matBillboard = matBillboard;	// 行列の合成
+	constMap->matBillboard = XMMatrixIdentity();	// 行列の合成
+	constBuff->Unmap(0, nullptr);
+}
+
+void Object3d::Draw2()
+{
+	// nullptrチェック
+	assert(device);
+	assert(Object3d::cmdList);
+
+	// 頂点バッファの設定
+	cmdList->IASetVertexBuffers(0, 1, &vbView);
+	// インデックスバッファの設定
+	//cmdList->IASetIndexBuffer(&ibView);
+
+	// デスクリプタヒープの配列
+	ID3D12DescriptorHeap* ppHeaps[] = { descHeap.Get() };
+	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	// 定数バッファビューをセット
+	cmdList->SetGraphicsRootConstantBufferView(0, constBuff->GetGPUVirtualAddress());
+	// シェーダリソースビューをセット
+	cmdList->SetGraphicsRootDescriptorTable(1, gpuDescHandleSRV);
+	// 描画コマンド
+	//cmdList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
+	cmdList->DrawInstanced(_countof(vertices), 1, 0, 0);
+	//cmdList->DrawInstanced((UINT)std::distance(particles.begin(), particles.end()), 1, 0, 0);
 }

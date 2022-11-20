@@ -234,10 +234,13 @@ public: // メンバ関数
 	/// </summary>
 	void Update();
 
+	void Update2();
+
 	/// <summary>
 	/// 描画
 	/// </summary>
 	void Draw();
+	void Draw2();
 
 	/// <summary>
 	/// 座標の取得
